@@ -1,4 +1,3 @@
-# SWE599
-## Project Repository of SWE599
+# SWE599- Project Repository 
 
 This repository will be used for SWE599 project throughout the semester . 
