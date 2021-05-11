@@ -1,0 +1,10 @@
+# Default ignored files
+/shelf/
+/workspace.xml
+# CodeStream ignored files
+/../../SWE599\.idea/codestream.xml
+# Datasource local storage ignored files
+/../../../../../../../:\Users\turgu\OneDrive\Masaüstü\SWE599\.idea/dataSources/
+/dataSources.local.xml
+# Editor-based HTTP Client requests
+/httpRequests/
