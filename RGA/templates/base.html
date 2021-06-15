@@ -21,6 +21,8 @@
 
 
 
+
+
 </head>
 <body>
 	<nav class="navbar navbar-expand-m navbar-inverse" role='navigation' id='navbar'>
@@ -29,8 +31,8 @@
 			<a class="navbar-brand" href="{% url 'home' %}">Home Page</a>
 			<ul class="navbar-nav me-auto mb-2 mb-lg-0">
           {% if user.is_authenticated %}
-	        <li class="nav-item"><a href="{% url 'home' %}" class="navbar-brand">Play </a>
-	        <li class="nav-item"><a href="{% url 'home' %}" class="navbar-brand">Create</a>
+	        <li class="nav-item"><a href="{% url 'domain:play' %}" class="navbar-brand">Play </a>
+	        <li class="nav-item"><a href="{% url 'domain:create' %}" class="navbar-brand">Create</a>
 	        <li class="nav-item"><a href="{% url 'accounts:logout' %}" class="navbar-brand">Logout</a>
           {% else %}
             <li class="nav-item"><a  href="{% url 'accounts:login' %}" class="navbar-brand">Login</a></li>

@@ -5,11 +5,12 @@
 	<br><br>
 	<h1><b>Welcome {{ user.username }} !</b></h1>
 	<br><br>
-	<h2>Go to <a href="{% url 'home' %}">Play</a> page to simulate a conversational game .</h2>
+
+	<h2>Go to <a href="{% url 'domain:play' %}">Play</a> page to simulate a conversational game .</h2>
 	<br>
 	<h2><b>&nbsp &nbsp &nbsp or</b></h2>
 	<br>
-	<h2>Go to <a href="{% url 'home' %}">Create</a> page and create your own interview structure.</h2>
+	<h2>Go to <a href="{% url 'domain:create' %}">Create</a> page and create your own interview structure.</h2>
 	<br><br>
 
     {% else %}
