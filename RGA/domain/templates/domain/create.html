@@ -1,4 +1,493 @@
 {% extends "base.html" %}
 {% block content %}
+	<script src="https://unpkg.com/gojs/release/go-debug.js"></script>
+    <div class="p-4 w-full">
+    <script id="code">
+    function init() {
+      var $ = go.GraphObject.make;  // for conciseness in defining templates
+      myDiagram =
+        $(go.Diagram, "myDiagramDiv",
+          {
+            allowCopy: false,
+            layout:
+              $(go.LayeredDigraphLayout,
+                {
+                  setsPortSpots: false,  // Links already know their fromSpot and toSpot
+                  columnSpacing: 5,
+                  isInitial: false,
+                  isOngoing: false
+                }),
+            validCycle: go.Diagram.CycleNotDirected,
+            "undoManager.isEnabled": true
+          });
 
+      // when the document is modified, add a "*" to the title and enable the "Save" button
+      myDiagram.addDiagramListener("Modified", function(e) {
+        var button = document.getElementById("SaveButton");
+        if (button) button.disabled = !myDiagram.isModified;
+        var idx = document.title.indexOf("*");
+        if (myDiagram.isModified) {
+          if (idx < 0) document.title += "*";
+        } else {
+          if (idx >= 0) document.title = document.title.substr(0, idx);
+        }
+      });
+
+      var graygrad = $(go.Brush, "Linear",
+        { 0: "white", 0.1: "whitesmoke", 0.9: "whitesmoke", 1: "lightgray" });
+
+      myDiagram.nodeTemplate =  // the default node template
+        $(go.Node, "Spot",
+          { selectionAdorned: false, textEditable: true, locationObjectName: "BODY" },
+          new go.Binding("location", "loc", go.Point.parse).makeTwoWay(go.Point.stringify),
+          // the main body consists of a Rectangle surrounding the text
+          $(go.Panel, "Auto",
+            { name: "BODY" },
+            $(go.Shape, "Rectangle",
+              { fill: graygrad, stroke: "gray", minSize: new go.Size(120, 21) },
+              new go.Binding("fill", "isSelected", function(s) { return s ? "dodgerblue" : graygrad; }).ofObject()),
+            $(go.TextBlock,
+              {
+                stroke: "black", font: "12px sans-serif", editable: true,
+                margin: new go.Margin(3, 3 + 11, 3, 3 + 4), alignment: go.Spot.Left
+              },
+              new go.Binding("text").makeTwoWay())
+          ),
+          // output port
+          $(go.Panel, "Auto",
+            { alignment: go.Spot.Right, portId: "from", fromLinkable: true, cursor: "pointer", click: addNodeAndLink },
+            $(go.Shape, "Circle",
+              { width: 22, height: 22, fill: "white", stroke: "dodgerblue", strokeWidth: 3 }),
+            $(go.Shape, "PlusLine",
+              { width: 11, height: 11, fill: null, stroke: "dodgerblue", strokeWidth: 3 })
+          ),
+          // input port
+          $(go.Panel, "Auto",
+            { alignment: go.Spot.Left, portId: "to", toLinkable: true },
+            $(go.Shape, "Circle",
+              { width: 8, height: 8, fill: "white", stroke: "gray" }),
+            $(go.Shape, "Circle",
+              { width: 4, height: 4, fill: "dodgerblue", stroke: null })
+          )
+        );
+
+      myDiagram.nodeTemplate.contextMenu =
+        $("ContextMenu",
+          $("ContextMenuButton",
+            $(go.TextBlock, "Rename"),
+            { click: function(e, obj) { e.diagram.commandHandler.editTextBlock(); } },
+            new go.Binding("visible", "", function(o) { return o.diagram && o.diagram.commandHandler.canEditTextBlock(); }).ofObject()),
+          // add one for Editing...
+          $("ContextMenuButton",
+            $(go.TextBlock, "Delete"),
+            { click: function(e, obj) { e.diagram.commandHandler.deleteSelection(); } },
+            new go.Binding("visible", "", function(o) { return o.diagram && o.diagram.commandHandler.canDeleteSelection(); }).ofObject())
+        );
+
+      myDiagram.nodeTemplateMap.add("Loading",
+        $(go.Node, "Spot",
+          { selectionAdorned: false, textEditable: true, locationObjectName: "BODY" },
+          new go.Binding("location", "loc", go.Point.parse).makeTwoWay(go.Point.stringify),
+          // the main body consists of a Rectangle surrounding the text
+          $(go.Panel, "Auto",
+            { name: "BODY" },
+            $(go.Shape, "Rectangle",
+              { fill: graygrad, stroke: "gray", minSize: new go.Size(120, 21) },
+              new go.Binding("fill", "isSelected", function(s) { return s ? "dodgerblue" : graygrad; }).ofObject()),
+            $(go.TextBlock,
+              {
+                stroke: "black", font: "12px sans-serif", editable: true,
+                margin: new go.Margin(3, 3 + 11, 3, 3 + 4), alignment: go.Spot.Left
+              },
+              new go.Binding("text", "text"))
+          ),
+          // output port
+          $(go.Panel, "Auto",
+            { alignment: go.Spot.Right, portId: "from", fromLinkable: true, click: addNodeAndLink },
+            $(go.Shape, "Circle",
+              { width: 22, height: 22, fill: "white", stroke: "dodgerblue", strokeWidth: 3 }),
+            $(go.Shape, "PlusLine",
+              { width: 11, height: 11, fill: null, stroke: "dodgerblue", strokeWidth: 3 })
+          )
+        ));
+
+      myDiagram.nodeTemplateMap.add("End",
+        $(go.Node, "Spot",
+          { selectionAdorned: false, textEditable: true, locationObjectName: "BODY" },
+          new go.Binding("location", "loc", go.Point.parse).makeTwoWay(go.Point.stringify),
+          // the main body consists of a Rectangle surrounding the text
+          $(go.Panel, "Auto",
+            { name: "BODY" },
+            $(go.Shape, "Rectangle",
+              { fill: graygrad, stroke: "gray", minSize: new go.Size(120, 21) },
+              new go.Binding("fill", "isSelected", function(s) { return s ? "dodgerblue" : graygrad; }).ofObject()),
+            $(go.TextBlock,
+              {
+                stroke: "black", font: "12px sans-serif", editable: true,
+                margin: new go.Margin(3, 3 + 11, 3, 3 + 4), alignment: go.Spot.Left
+              },
+              new go.Binding("text", "text"))
+          ),
+          // input port
+          $(go.Panel, "Auto",
+            { alignment: go.Spot.Left, portId: "to", toLinkable: true },
+            $(go.Shape, "Circle",
+              { width: 8, height: 8, fill: "white", stroke: "gray" }),
+            $(go.Shape, "Circle",
+              { width: 4, height: 4, fill: "dodgerblue", stroke: null })
+          )
+        ));
+
+
+      // dropping a node on this special node will cause the selection to be deleted;
+      // linking or relinking to this special node will cause the link to be deleted
+      myDiagram.nodeTemplateMap.add("Recycle",
+        $(go.Node, "Auto",
+          {
+            portId: "to", toLinkable: true, deletable: false,
+            layerName: "Background", locationSpot: go.Spot.Center
+          },
+          new go.Binding("location", "loc", go.Point.parse).makeTwoWay(go.Point.stringify),
+          { dragComputation: function(node, pt, gridpt) { return pt; } },
+          { mouseDrop: function(e, obj) { myDiagram.commandHandler.deleteSelection(); } },
+          $(go.Shape,
+            { fill: "lightgray", stroke: "gray" }),
+          $(go.TextBlock, "Drop Here\nTo Delete",
+            { margin: 5, textAlign: "center" })
+        ));
+
+      // this is a click event handler that adds a node and a link to the diagram,
+      // connecting with the node on which the click occurred
+      function addNodeAndLink(e, obj) {
+        var fromNode = obj.part;
+        var diagram = fromNode.diagram;
+        diagram.startTransaction("Add State");
+        // get the node data for which the user clicked the button
+        var fromData = fromNode.data;
+        // create a new "State" data object, positioned off to the right of the fromNode
+        var p = fromNode.location.copy();
+        p.x += diagram.toolManager.draggingTool.gridSnapCellSize.width;
+        var toData = {
+          text: "new",
+          loc: go.Point.stringify(p)
+        };
+        // add the new node data to the model
+        var model = diagram.model;
+        model.addNodeData(toData);
+        // create a link data from the old node data to the new node data
+        var linkdata = {
+          from: model.getKeyForNodeData(fromData),
+          to: model.getKeyForNodeData(toData)
+        };
+        // and add the link data to the model
+        model.addLinkData(linkdata);
+        // select the new Node
+        var newnode = diagram.findNodeForData(toData);
+        diagram.select(newnode);
+        // snap the new node to a valid location
+        newnode.location = diagram.toolManager.draggingTool.computeMove(newnode, p);
+        // then account for any overlap
+        shiftNodesToEmptySpaces();
+        diagram.commitTransaction("Add State");
+      }
+
+      // Highlight ports when they are targets for linking or relinking.
+      var OldTarget = null;  // remember the last highlit port
+      function highlight(port) {
+        if (OldTarget !== port) {
+          lowlight();  // remove highlight from any old port
+          OldTarget = port;
+          port.scale = 1.3;  // highlight by enlarging
+        }
+      }
+      function lowlight() {  // remove any highlight
+        if (OldTarget) {
+          OldTarget.scale = 1.0;
+          OldTarget = null;
+        }
+      }
+
+      // Connecting a link with the Recycle node removes the link
+      myDiagram.addDiagramListener("LinkDrawn", function(e) {
+        var link = e.subject;
+        if (link.toNode.category === "Recycle") myDiagram.remove(link);
+        lowlight();
+      });
+      myDiagram.addDiagramListener("LinkRelinked", function(e) {
+        var link = e.subject;
+        if (link.toNode.category === "Recycle") myDiagram.remove(link);
+        lowlight();
+      });
+
+      myDiagram.linkTemplate =
+        $(go.Link,
+          { selectionAdorned: false, fromPortId: "from", toPortId: "to", relinkableTo: true },
+          $(go.Shape,
+            { stroke: "gray", strokeWidth: 2 },
+            {
+              mouseEnter: function(e, obj) { obj.strokeWidth = 5; obj.stroke = "dodgerblue"; },
+              mouseLeave: function(e, obj) { obj.strokeWidth = 2; obj.stroke = "gray"; }
+            })
+        );
+
+      function commonLinkingToolInit(tool) {
+        // the temporary link drawn during a link drawing operation (LinkingTool) is thick and blue
+        tool.temporaryLink =
+          $(go.Link, { layerName: "Tool" },
+            $(go.Shape, { stroke: "dodgerblue", strokeWidth: 5 }));
+
+        // change the standard proposed ports feedback from blue rectangles to transparent circles
+        tool.temporaryFromPort.figure = "Circle";
+        tool.temporaryFromPort.stroke = null;
+        tool.temporaryFromPort.strokeWidth = 0;
+        tool.temporaryToPort.figure = "Circle";
+        tool.temporaryToPort.stroke = null;
+        tool.temporaryToPort.strokeWidth = 0;
+
+        // provide customized visual feedback as ports are targeted or not
+        tool.portTargeted = function(realnode, realport, tempnode, tempport, toend) {
+          if (realport === null) {  // no valid port nearby
+            lowlight();
+          } else if (toend) {
+            highlight(realport);
+          }
+        };
+      }
+
+      var ltool = myDiagram.toolManager.linkingTool;
+      commonLinkingToolInit(ltool);
+      // do not allow links to be drawn starting at the "to" port
+      ltool.direction = go.LinkingTool.ForwardsOnly;
+
+      var rtool = myDiagram.toolManager.relinkingTool;
+      commonLinkingToolInit(rtool);
+      // change the standard relink handle to be a shape that takes the shape of the link
+      rtool.toHandleArchetype =
+        $(go.Shape,
+          { isPanelMain: true, fill: null, stroke: "dodgerblue", strokeWidth: 5 });
+
+      // use a special DraggingTool to cause the dragging of a Link to start relinking it
+      myDiagram.toolManager.draggingTool = new DragLinkingTool();
+
+      // detect when dropped onto an occupied cell
+      myDiagram.addDiagramListener("SelectionMoved", shiftNodesToEmptySpaces);
+
+      function shiftNodesToEmptySpaces() {
+        myDiagram.selection.each(function(node) {
+          if (!(node instanceof go.Node)) return;
+          // look for Parts overlapping the node
+          while (true) {
+            var exist = myDiagram.findObjectsIn(node.actualBounds,
+              // only consider Parts
+              function(obj) { return obj.part; },
+              // ignore Links and the dropped node itself
+              function(part) { return part instanceof go.Node && part !== node; },
+              // check for any overlap, not complete containment
+              true).first();
+            if (exist === null) break;
+            // try shifting down beyond the existing node to see if there's empty space
+            node.position = new go.Point(node.actualBounds.x, exist.actualBounds.bottom + 10);
+          }
+        });
+      }
+
+      // prevent nodes from being dragged to the left of where the layout placed them
+      myDiagram.addDiagramListener("LayoutCompleted", function(e) {
+        myDiagram.nodes.each(function(node) {
+          if (node.category === "Recycle") return;
+          node.minLocation = new go.Point(node.location.x, -Infinity);
+        });
+      });
+
+      load();  // load initial diagram from the mySavedModel textarea
+    }
+
+    function save() {
+      document.getElementById("mySavedModel").value = myDiagram.model.toJson();
+      myDiagram.isModified = false;
+    }
+    function load() {
+      myDiagram.model = go.Model.fromJson(document.getElementById("mySavedModel").value);
+      // if any nodes don't have a real location, explicitly do a layout
+      if (myDiagram.nodes.any(function(n) { return !n.location.isReal(); })) layout();
+    }
+
+    function layout() {
+      myDiagram.layoutDiagram(true);
+    }
+
+
+    // Define a custom tool that changes a drag operation on a Link to a relinking operation,
+    // but that operates like a normal DraggingTool otherwise.
+    function DragLinkingTool() {
+      go.DraggingTool.call(this);
+      this.isGridSnapEnabled = true;
+      this.isGridSnapRealtime = false;
+      this.gridSnapCellSize = new go.Size(182, 1);
+      this.gridSnapOrigin = new go.Point(5.5, 0);
+    }
+    go.Diagram.inherit(DragLinkingTool, go.DraggingTool);
+
+    // Handle dragging a link specially -- by starting the RelinkingTool on that Link
+    DragLinkingTool.prototype.doActivate = function() {
+      var diagram = this.diagram;
+      if (diagram === null) return;
+      this.standardMouseSelect();
+      var main = this.currentPart;  // this is set by the standardMouseSelect
+      if (main instanceof go.Link) { // maybe start relinking instead of dragging
+        var relinkingtool = diagram.toolManager.relinkingTool;
+        // tell the RelinkingTool to work on this Link, not what is under the mouse
+        relinkingtool.originalLink = main;
+        // start the RelinkingTool
+        diagram.currentTool = relinkingtool;
+        // can activate it right now, because it already has the originalLink to reconnect
+        relinkingtool.doActivate();
+        relinkingtool.doMouseMove();
+      } else {
+        go.DraggingTool.prototype.doActivate.call(this);
+      }
+    };
+    // end DragLinkingTool
+    window.addEventListener('DOMContentLoaded', init);
+
+  </script>
+	<form id="creategameform" method="post">
+		{% csrf_token %}
+		<input type="hidden" id="gametext" name="gt" value=""/>
+		<label for="gamename">Game's name:</label><input type="text" id="gamename" name="gamename"/>
+		<button type="submit" name="contact-submit" class="btn btn-primary">Create Game</button>
+
+	</form>
+	<script>
+$("#creategameform").submit(function (e) {
+	    document.getElementById("gametext").value=document.getElementById("mySavedModel").value;
+        e.preventDefault();
+        var serializedData = $(this).serialize();
+        $.ajax({
+            type: 'POST',
+            url: "{% url 'domain:create_game' %}",
+            data: serializedData,
+            success: function (response) {
+
+                alert("Game saved!");
+	            console.log(response);
+
+                window.location.reload();
+
+            },
+            error: function (response) {
+				alert("Game could not be saved!")
+                console.log(response)
+            }
+        });
+    });
+
+	</script>
+
+<div id="sample">
+  <div id="myDiagramDiv" style="border: solid 1px black; width:100%; height:500px"></div>
+  <button id="SaveButton" onclick="save()">Save</button>
+  <button onclick="load()">Load</button>
+  <button onclick="layout()">Do Layout</button>
+  <br />
+  <textarea id="mySavedModel" style="width:100%;height:300px">
+{ "class": "GraphLinksModel",
+  "nodeDataArray": [
+{"key":1,"text":"Descriptive Introduction to Interview","category":"Loading","loc":"0 346.4999999999999"},
+{"key":2,"text":"Q:First question of bot","loc":"274.083984375 346.4999999999999"},
+{"key":3,"text":"A:Answer ,E:Evaluation","loc":"477.8056640625 206.4999999999999"},
+{"key":4,"text":"Answer of bot","loc":"688.869140625 206.4999999999999"},
+{"key":5,"text":"A:Answer , E:Evaluation","loc":"476.138671875 471.4999999999998"},
+{"key":-2,"category":"Recycle","loc":"1339.2998046874975 627.4999999999989"},
+{"text":"Answer of bot","loc":"688.8691406250005 471.4999999999998","key":-8},
+{"text":"A:Answer,E:Evaluation\n","loc":"875.5341796874986 36.00507812500014","key":-9},
+{"text":"A:Answer , E:Evaluation","loc":"871.8691406250005 81.49999999999989","key":-10},
+{"text":"A:Answer, E:Evaluation","loc":"873.8671875000009 141.49999999999977","key":-11},
+{"text":"A:Answer,E:Evaluation","loc":"875.5341796874998 226.50000000000003","key":-12},
+{"text":"A:Answer,E:Evaluation","loc":"875.5341796874998 296.50000000000006","key":-13},
+{"text":"A:Answer,E:Evaluation","loc":"875.5341796874998 366.50000000000017","key":-14},
+{"text":"A:Answer,E:Evaluation","loc":"875.5341796874998 401.50000000000057","key":-15},
+{"text":"A:Answer,E:Evaluation","loc":"875.5341796874998 436.4999999999998","key":-16},
+{"text":"A:Answer,E:Evaluation","loc":"875.5341796874998 471.4999999999998","key":-17},
+{"text":"A:Answer,E:Evaluation","loc":"875.5341796874998 506.4999999999998","key":-18},
+{"text":"A:Answer,E:Evaluation","loc":"875.5341796874998 556.5000000000002","key":-19},
+{"text":"End Screen","loc":"1084.5996093750005 41.50000000000003","key":-20},
+{"text":"Answer of bot","loc":"1084.599609375001 76.5","key":-21},
+{"text":"Answer of bot","loc":"1084.5996093749973 141.49999999999977","key":-22},
+{"text":"Answer of bot","loc":"1084.599609374997 226.49999999999994","key":-23},
+{"text":"Answer of bot","loc":"1084.5996093749995 296.50000000000006","key":-24},
+{"text":"Answer of bot","loc":"1084.5996093749995 366.50000000000006","key":-25},
+{"text":"End Screen","loc":"1084.5996093749995 401.5000000000008","key":-26},
+{"text":"Answer of bot","loc":"1084.5996093749995 436.4999999999998","key":-27},
+{"text":"Answer of bot","loc":"1084.5996093749995 471.4999999999998","key":-28},
+{"text":"Answer of bot","loc":"1084.5996093749995 506.4999999999998","key":-29},
+{"text":"Answer of bot","loc":"1084.5996093749995 556.5000000000002","key":-30},
+{"text":"A:Answer,E:Evaluation","loc":"1267.599609375 1.5","key":-31},
+{"text":"A:Answer,E:Evaluation","loc":"1267.599609375 36.5","key":-32},
+{"text":"A:Answer,E:Evaluation","loc":"1267.599609375 71.5","key":-33},
+{"text":"A:Answer,E:Evaluation","loc":"1267.599609375 106.5","key":-34},
+{"text":"A:Answer,E:Evaluation","loc":"1267.599609375 141.5","key":-35},
+{"text":"A:Answer,E:Evaluation","loc":"1267.599609375 176.5","key":-36},
+{"text":"A:Answer,E:Evaluation","loc":"1267.599609375 211.5","key":-37},
+{"text":"A:Answer,E:Evaluation","loc":"1267.599609375 246.49999999999997","key":-38},
+{"text":"A:Answer,E:Evaluation","loc":"1267.599609375 281.5","key":-39},
+{"text":"A:Answer,E:Evaluation","loc":"1267.599609375 316.5","key":-40},
+{"text":"A:Answer,E:Evaluation","loc":"1267.599609375 351.5","key":-41},
+{"text":"A:Answer,E:Evaluation","loc":"1267.599609375 386.5","key":-42},
+{"text":"A:Answer,E:Evaluation","loc":"1267.599609375 436.5","key":-45},
+{"text":"A:Answer,E:Evaluation","loc":"1267.599609375 471.5","key":-46},
+{"text":"A:Answer,E:Evaluation","loc":"1267.599609375 506.5","key":-47},
+{"text":"A:Answer,E:Evaluation","loc":"1267.599609375 541.5","key":-48},
+{"text":"A:Answer,E:Evaluation","loc":"1267.599609375 576.5","key":-49}
+],
+  "linkDataArray": [
+{"from":1,"to":2},
+{"from":2,"to":3},
+{"from":2,"to":5},
+{"from":3,"to":4},
+{"from":5,"to":-8},
+{"from":4,"to":-9},
+{"from":4,"to":-10},
+{"from":4,"to":-11},
+{"from":4,"to":-12},
+{"from":4,"to":-13},
+{"from":4,"to":-14},
+{"from":-8,"to":-15},
+{"from":-8,"to":-16},
+{"from":-8,"to":-17},
+{"from":-8,"to":-18},
+{"from":-8,"to":-19},
+{"from":-9,"to":-20},
+{"from":-10,"to":-21},
+{"from":-11,"to":-22},
+{"from":-12,"to":-23},
+{"from":-13,"to":-24},
+{"from":-14,"to":-25},
+{"from":-15,"to":-26},
+{"from":-16,"to":-27},
+{"from":-17,"to":-28},
+{"from":-18,"to":-29},
+{"from":-19,"to":-30},
+{"from":-21,"to":-31},
+{"from":-21,"to":-32},
+{"from":-21,"to":-33},
+{"from":-22,"to":-34},
+{"from":-22,"to":-35},
+{"from":-22,"to":-36},
+{"from":-23,"to":-37},
+{"from":-23,"to":-38},
+{"from":-24,"to":-39},
+{"from":-24,"to":-40},
+{"from":-25,"to":-41},
+{"from":-25,"to":-42},
+{"from":-27,"to":-45},
+{"from":-28,"to":-46},
+{"from":-29,"to":-47},
+{"from":-30,"to":-48},
+{"from":-30,"to":-49}
+]}   </textarea>
+</div>
+    </div>
+
+  </div>
 {% endblock %}

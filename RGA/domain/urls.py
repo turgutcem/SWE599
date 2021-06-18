@@ -6,4 +6,5 @@ app_name = 'domain'
 urlpatterns = [
     path('play/', views.play_view, name='play'),
     path('create/', views.create_view, name='create'),
+    path('create_game/', views.create_game, name='create_game'),
 ]

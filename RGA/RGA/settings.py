@@ -40,6 +40,8 @@ INSTALLED_APPS = [
     'accounts',
     'domain',
     'bootstrap3',
+    'mptt',
+
 ]
 
 MIDDLEWARE = [
