@@ -20,10 +20,12 @@ def play_view(request):
 
 @login_required
 def play_game_view(request, pk):
+    game = Game()
     game = Game.objects.filter(pk=pk).last()
-
-    print(game.game_name)
-    return render(request, "domain/play_game.html")
+    domainknowledge = DomainKnowledge()
+    domainknowledge = DomainKnowledge.objects.filter(game=game)
+    context = {"dk": domainknowledge}
+    return render(request, "domain/play_game.html", context=context)
 
 
 @login_required

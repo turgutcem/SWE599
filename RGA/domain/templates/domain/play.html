@@ -2,6 +2,8 @@
 {% block content %}
 <div class="actionlist">
 	<ul class="list-group">
+
+		<h3><b>Theese are the games created by you : </b></h3>
 		{% for game in your_games %}
 			<li class="list-group-item"><b>Game ID: </b>{{ game.pk }}</li>
 			<li class="list-group-item"><b>Name of the game: </b>{{ game.game_name }}</li>
@@ -11,6 +13,8 @@
 			<br><br>
 
 		{% endfor %}
+
+		<h3><b> Theese are the games created by other users : </b></h3>
 		{% for game in other_games %}
 			<li class="list-group-item"><b>Game ID: </b>{{ game.pk }}</li>
 			<li class="list-group-item"><b>Name of the game: </b>{{ game.game_name }}</li>
