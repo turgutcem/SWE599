@@ -1,4 +1,67 @@
 {% extends "base.html" %}
+
 {% block content %}
-	<p></p>
+
+		{% comment %}<li>{{ dk.content }},{{ dk.quest_type }},{{ dk.gamekey }},{{ dk.parent.gamekey }},{{ dk.children.all }}</li>
+		{% for a in dk.children.all %}
+			<li>{{ a.gamekey }}</li>
+			{% endfor %}{% endcomment %}
+	 <form id="questionForm" method="POST" class="form-container">
+            {% csrf_token %}
+			{% if dk.quest_type == "END"  %}
+				<div class="jumbotron">
+					<p>{{ dk.content }}</p>
+					<p>Click next to see your results .</p>
+					<input type="hidden" value="FINISHED" name="FINISHED">
+				</div>
+			{% elif dk.quest_type == "INTRO" %}
+				<div class="jumbotron">
+					<p>{{ dk.content }}</p>
+					<input type="hidden" value="INTRO" name="INTRO">
+				</div>
+			{% else %}
+				<div class="jumbotron">
+					<p>{{ dk.content }}</p>
+				</div>
+				{% for a in dk.children.all %}
+					<div class="form-check">
+                    <input class="form-check-input" type="radio" name="exampleRadios" id="optionz" value={{ a.pk }}>
+                    <label class="form-check-label" for="optionz">
+	                    {{ a.content }}
+                    </label>
+					</div>
+
+				{% endfor %}
+
+		    {% endif %}
+
+            <button id="next" type="submit" name="question-form-submit" class="btn btn-primary">Next</button>
+        </form>
+
+		{% block javascript %}
+
+<script type="text/javascript">
+    $("#questionForm").submit(function (e) {
+        e.preventDefault();
+        var serializedData = $(this).serialize();
+        $.ajax({
+            type: 'POST',
+            url: "{% url 'domain:next' %}",
+            data: serializedData,
+            success: function (response) {
+
+                alert("Annotation created!");
+                window.location.reload();
+
+                console.log(response);
+            },
+            error: function (response) {
+
+                console.log(response)
+            }
+        });
+    });
+
+
+
 {% endblock %}

@@ -3,8 +3,6 @@ from django.contrib.auth.models import User
 from mptt.models import MPTTModel, TreeForeignKey
 
 
-# Create your models here.
-
 
 class Game(models.Model):
     game_name = models.CharField(max_length=100, null=False, default="trial", name="game_name")
