@@ -8,5 +8,5 @@ urlpatterns = [
     path('create/', views.create_view, name='create'),
     path('create_game/', views.create_game, name='create_game'),
     path('play/<int:pk>/', views.play_game_view, name='play_game'),
-    path('play/<int:pk>/next/',views.next,name='next'),
+    path('next/<int:pk>/',views.next,name='next'),
 ]

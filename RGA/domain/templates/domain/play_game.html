@@ -17,7 +17,8 @@
 			{% elif dk.quest_type == "INTRO" %}
 				<div class="jumbotron">
 					<p>{{ dk.content }}</p>
-					<input type="hidden" value="INTRO" name="INTRO">
+					<input type="hidden" value={{ dk.pk }} name="pk">
+
 				</div>
 			{% else %}
 				<div class="jumbotron">
@@ -38,7 +39,6 @@
             <button id="next" type="submit" name="question-form-submit" class="btn btn-primary">Next</button>
         </form>
 
-		{% block javascript %}
 
 <script type="text/javascript">
     $("#questionForm").submit(function (e) {
@@ -46,22 +46,17 @@
         var serializedData = $(this).serialize();
         $.ajax({
             type: 'POST',
-            url: "{% url 'domain:next' %}",
+            url: "{% url 'domain:next' pk=dk.pk %}",
             data: serializedData,
             success: function (response) {
-
-                alert("Annotation created!");
+                $("#questionForm")[0].reset();
                 window.location.reload();
-
                 console.log(response);
             },
             error: function (response) {
-
                 console.log(response)
             }
         });
     });
-
-
-
-{% endblock %}
+</script>
+	{% endblock %}

@@ -23,19 +23,26 @@ def play_game_view(request, pk):
     game = Game()
     game = Game.objects.filter(pk=pk).last()
     domainknowledge = DomainKnowledge()
-    domainknowledge = DomainKnowledge.objects.filter(game=game,quest_type="INTRO").last()
+    domainknowledge = DomainKnowledge.objects.filter(game=game).last()
     context = {"dk": domainknowledge}
     return render(request, "domain/play_game.html", context=context)
 
+
 @login_required
 @require_POST
-def next(request):
-    try:
-        dk=DomainKnowledge()
-        dk=request.POST.get("gamekey")
-        return JsonResponse({"Success":True},status=200)
-    except:
-        return JsonResponse()
+def next(request, pk):
+    dk = DomainKnowledge()
+    dk = DomainKnowledge.objects.filter(pk=pk).last()
+    if dk.quest_type == 'INTRO':
+        return JsonResponse({"Success": True}, status=200)
+
+
+
+@login_required
+@require_POST
+def results(request, pk):
+   pass
+
 
 @login_required
 def create_view(request):
