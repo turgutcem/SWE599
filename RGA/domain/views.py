@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
 from django.http import JsonResponse
 from .models import Game, DomainKnowledge
+import json
 
 
 # Create your views here.
@@ -20,12 +21,8 @@ def play_view(request):
 @login_required
 def play_game_view(request, pk):
     game = Game.objects.filter(pk=pk).last()
-    dk = DomainKnowledge()
-    dk.game = game
-    dk.parent = None
-    dk.type = 'INTRO'
-    dk.save()
-    print(game.game)
+
+    print(game.game_name)
     return render(request, "domain/play_game.html")
 
 
@@ -43,7 +40,52 @@ def create_game(request):
         game.game_tree = request.POST.get("gt")
         game.created_by = request.user
         game.validation = False
+
         game.save()
+        save(game.pk)
         return JsonResponse({"success": True}, status=200)
     except:
         return JsonResponse({"success": False}, status=400)
+
+
+def save(pk):
+    game = Game.objects.filter(pk=pk).last()
+    game_tree_json = game.game_tree
+    a = json.loads(game_tree_json)
+    for element in a['nodeDataArray']:
+        if ('category', 'Recycle') in element.items():
+            continue
+        dk = DomainKnowledge()
+        dk.game = game
+        dk.gamekey = element['key']
+
+        if 'BOT_Q' in element['text']:
+
+            dk.content = element['text'].split('BOT_Q')[1]
+            dk.quest_type = 'BOT_Q'
+
+        elif 'INTRO' in element['text']:
+
+            dk.quest_type = 'INTRO'
+            dk.content = element['text'].split('INTRO')[1]
+        elif 'HUM_Q' and 'EVAL' in element['text']:
+
+            dk.quest_type = 'HUM_Q'
+            dk.evaluation = element['text'].split('HUM_Q')[1].split('EVAL')[1]
+            dk.content = element['text'].split('EVAL')[0].split('HUM_Q')[1]
+        elif 'END' in element['text']:
+
+            dk.quest_type = 'END'
+            dk.content = element['text'].split('END')[1]
+
+        else:
+
+            return JsonResponse({"success": False}, status=400)
+
+        dk.save()
+
+    for helement in a['linkDataArray']:
+        parentz = DomainKnowledge.objects.filter(game=game, gamekey=int(helement['from'])).last()
+        childrenz = DomainKnowledge.objects.filter(game=game, gamekey=int(helement['to'])).update(parent=parentz)
+
+    return JsonResponse({"success": True}, status=200)

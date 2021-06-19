@@ -14,14 +14,9 @@ class Game(models.Model):
 
 
 class DomainKnowledge(MPTTModel):
-    INTRO = 'INTRO'
-    BOT_Q = 'BOT_Q'
-    ANSWER = 'ANSWER'
-    END = 'END'
-    CHOICES = ((INTRO, INTRO), (BOT_Q, BOT_Q), (ANSWER, ANSWER), (END, END))
-
-    type = models.CharField(max_length=100, choices=CHOICES, name="type_of")
+    gamekey=models.IntegerField(null=False)
+    quest_type = models.CharField(max_length=100)
     content = models.TextField()
     evaluation = models.CharField(max_length=250, blank=True)
     game = models.ForeignKey(Game, on_delete=models.CASCADE, null=False, related_name="game")
-    parent = TreeForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name="children")
+    parent = TreeForeignKey('self', on_delete=models.CASCADE, null=True, related_name="children")
