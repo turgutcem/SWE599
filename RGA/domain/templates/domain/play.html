@@ -1,1 +1,17 @@
 {% extends "base.html" %}
+{% block content %}
+<div class="actionlist">
+	<ul class="list-group">
+		{% for game in your_games %}
+			<li class="list-group-item"><b>Game ID: </b>{{ game.pk }}</li>
+			<li class="list-group-item"><b>Name of the game: </b>{{ game.game_name }}</li>
+			<li class="list-group-item"><b>Created by: </b>{{ game.created_by }}</li>
+			<br>
+			<a class="btn btn-primary" href="{% url 'domain:play_game' pk=game.pk %}">Play</a>
+			<br><br>
+
+		{% endfor %}
+	</ul>
+</div>
+
+{% endblock %}

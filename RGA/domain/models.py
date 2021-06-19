@@ -7,14 +7,21 @@ from mptt.models import MPTTModel, TreeForeignKey
 
 
 class Game(models.Model):
-    validation = models.BooleanField(null=True)
+    validation = models.BooleanField()
     game_name = models.CharField(max_length=100, null=False, default="trial", name="game_name")
     game_tree = models.TextField(name="game_tree")
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, default=None)
 
 
 class DomainKnowledge(MPTTModel):
-    type = models.CharField(max_length=100, null=False, name="type_")
+    INTRO = 'INTRO'
+    BOT_Q = 'BOT_Q'
+    ANSWER = 'ANSWER'
+    END = 'END'
+    CHOICES = ((INTRO, INTRO), (BOT_Q, BOT_Q), (ANSWER, ANSWER), (END, END))
+
+    type = models.CharField(max_length=100, choices=CHOICES, name="type_of")
     content = models.TextField()
-    game = models.ForeignKey(Game,on_delete=models.CASCADE,null=False,related_name="game")
+    evaluation = models.CharField(max_length=250, blank=True)
+    game = models.ForeignKey(Game, on_delete=models.CASCADE, null=False, related_name="game")
     parent = TreeForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name="children")
