@@ -4,6 +4,7 @@ from django.views.decorators.http import require_POST
 from django.http import JsonResponse
 from .models import Game, DomainKnowledge
 import json
+from django.core import serializers
 
 
 # Create your views here.
@@ -22,26 +23,24 @@ def play_view(request):
 def play_game_view(request, pk):
     game = Game()
     game = Game.objects.filter(pk=pk).last()
-    domainknowledge = DomainKnowledge()
-    domainknowledge = DomainKnowledge.objects.filter(game=game).last()
-    context = {"dk": domainknowledge}
-    return render(request, "domain/play_game.html", context=context)
+    domainknowledge = DomainKnowledge.objects.filter(game=game)
+    INTRO = DomainKnowledge.objects.filter(game=game, quest_type='INTRO').last()
+    domainknowledge = INTRO.children.all().last()
+    childrens = domainknowledge.children.all()
+    return render(request, "domain/play_game.html", {"dk": domainknowledge, "children": childrens, "INTRO": INTRO})
 
 
 @login_required
 @require_POST
-def next(request, pk):
-    dk = DomainKnowledge()
-    dk = DomainKnowledge.objects.filter(pk=pk).last()
-    if dk.quest_type == 'INTRO':
-        return JsonResponse({"Success": True}, status=200)
-
+def next_(request):
+    print(request.POST.get("dkid").split('=')[1])
+    return JsonResponse({"success": True}, status=200)
 
 
 @login_required
 @require_POST
 def results(request, pk):
-   pass
+    pass
 
 
 @login_required

@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'domain',
     'bootstrap3',
     'mptt',
+    'rest_framework',
 
 ]
 
