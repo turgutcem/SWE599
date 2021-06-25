@@ -7,7 +7,7 @@
 		<p id="quest-content">{{ dk.content }}</p>
 			<div class="btn-group" role="group">
 			{% for child in children %}
-				<button onclick="next()" class="btn btn-primary btn-group-lg btn-group-justified" aria-pressed="true" value={{ child.pk }}id={{ child.pk }}>{{ child.content }}</button>
+				<button class="btn btn-primary btn-group-lg btn-group-justified" aria-pressed="true" value={{ child.pk }}id={{ child.pk }}>{{ child.content }}</button>
 				<br><br>
 			{% endfor %}
 			</div>
@@ -22,14 +22,21 @@ $(".btn").click(function (){
             url: "{% url 'domain:next' %}",
             data: { 'dkid': dkid, 'csrfmiddlewaretoken': '{{ csrf_token }}' },
             dataType: "json",
-            success: function (response) {
-                alert("yes");
+            success: function (data) {
+
+
+                changehtml(data);
+                alert("Next question->")
             },
             error: function (response) {
-                alert("no");
+				alert("An error occured!")
             }
         });
 })
+
+function changehtml(data){
+	console.log(data['children'])
+}
 
 </script>
 	{% endblock %}

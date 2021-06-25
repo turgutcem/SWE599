@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
 from django.http import JsonResponse
 from .models import Game, DomainKnowledge
+from django.contrib.auth.models import User
 import json
 from django.core import serializers
 
@@ -33,13 +34,20 @@ def play_game_view(request, pk):
 @login_required
 @require_POST
 def next_(request):
-    print(request.POST.get("dkid").split('=')[1])
-    return JsonResponse({"success": True}, status=200)
+    domainknowledge = DomainKnowledge.objects.filter(pk=int(request.POST.get("dkid").split('=')[1])).last()
+    parent = domainknowledge.children.all().last()
+    children = parent.children.all()
+    childrenz = {}
+    for child in children:
+        childrenz[child.pk] = child.content
+    data = {"children": childrenz, "Success": True, "parent": parent.content}
+    return JsonResponse(data=data, status=200)
 
 
 @login_required
 @require_POST
 def results(request, pk):
+    user = User
     pass
 
 
