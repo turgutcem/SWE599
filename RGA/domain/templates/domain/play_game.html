@@ -1,42 +1,69 @@
 {% extends "base.html" %}
 
 {% block content %}
-		<div class="jumbotron">
+	<div class="jumbotron">
 		<p class="h3">{{ INTRO.content }}</p></div>
-		<br><br>
+
+	<br><br>
+	<div class="questionbox">
 		<p id="quest-content">{{ dk.content }}</p>
-			<div class="btn-group" role="group">
+		<div class="btn-group" role="group">
 			{% for child in children %}
-				<button class="btn btn-primary btn-group-lg btn-group-justified" aria-pressed="true" value={{ child.pk }}id={{ child.pk }}>{{ child.content }}</button>
+				<span><button class="btn btn-primary btn-group-lg btn-group-justified" aria-pressed="true"
+				              value={{ child.pk }}id={{ child.pk }}>{{ child.content }}</button></span>
 				<br><br>
 			{% endfor %}
-			</div>
-			<br><br>
+		<div id ="target" class="btn-group" role="group">
+		<br><br>
+		</div>
+		</div>
+
+		<br><br>
+	</div>
+	<br><br>
 
 
-<script>
-$(".btn").click(function (){
-            var dkid=$(this).val();
-			$.ajax({
-            type: "POST",
-            url: "{% url 'domain:next' %}",
-            data: { 'dkid': dkid, 'csrfmiddlewaretoken': '{{ csrf_token }}' },
-            dataType: "json",
-            success: function (data) {
+	<script>
+        $('body').on('click', '.btn', function () {
+            var dkid = $(this).val();
+            console.log(dkid)
+            $.ajax({
+                type: "POST",
+                url: "{% url 'domain:next' %}",
+                data: {'dkid': dkid, 'csrfmiddlewaretoken': '{{ csrf_token }}'},
+                dataType: "json",
+                success: function (data) {
+
+                    changehtml(data);
+                    alert("Next question->")
+                },
+                error: function (response) {
+                    alert("An error occured!")
+                }
+            });
+        })
+
+        var counter=0;
+        function changehtml(data) {
+
+	            var division = document.createElement("div")
+		        var target=document.getElementById("target")
+	            var question = document.createElement("p")
+	            question.innerText = data["parent"]
+	            division.appendChild(question)
+	            for (sthing in data["children"]) {
+	                var buton = document.createElement("button")
+	                buton.innerHTML = data["children"][sthing]
+	                buton.className = "btn btn-primary btn-group-lg btn-group-justified"
+	                buton.value = sthing
+	                buton.id = sthing
+	                division.appendChild(buton)
+	                division.appendChild(document.createElement("br"))
+	                division.appendChild(document.createElement("br"))
+	            }
+		        target.appendChild(division)}
 
 
-                changehtml(data);
-                alert("Next question->")
-            },
-            error: function (response) {
-				alert("An error occured!")
-            }
-        });
-})
 
-function changehtml(data){
-	console.log(data['children'])
-}
-
-</script>
-	{% endblock %}
+	</script>
+{% endblock %}

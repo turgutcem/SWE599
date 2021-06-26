@@ -34,12 +34,22 @@ def play_game_view(request, pk):
 @login_required
 @require_POST
 def next_(request):
-    domainknowledge = DomainKnowledge.objects.filter(pk=int(request.POST.get("dkid").split('=')[1])).last()
+    try:
+        domainknowledge = DomainKnowledge.objects.filter(pk=int(request.POST.get("dkid").split('=')[1])).last()
+        print(domainknowledge.content + "-")
+    except:
+        domainknowledge = DomainKnowledge.objects.filter(pk=int(request.POST.get("dkid"))).last()
+        print(domainknowledge.content + "+")
     parent = domainknowledge.children.all().last()
+    print(parent.pk)
+    print(parent.content)
     children = parent.children.all()
     childrenz = {}
     for child in children:
+        print("pk:" + str(child.pk))
         childrenz[child.pk] = child.content
+        print("content:" + child.content)
+
     data = {"children": childrenz, "Success": True, "parent": parent.content}
     return JsonResponse(data=data, status=200)
 
