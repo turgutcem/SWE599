@@ -1,6 +1,8 @@
 {% extends "base.html" %}
+{% load static %}
 {% block content%}
 
+	<div class="title">
 	{% if user.is_authenticated %}
 	<br><br>
 	<h1><b>Welcome {{ user.username }} !</b></h1>
@@ -23,4 +25,5 @@
 	  </p>
 	<p>The project repository can be reached from <a target="_blank" rel="noopener noreferrer" href="https://github.com/turgutcem/SWE599">here</a></p>
     {% endif %}
+	</div>
 {% endblock %}

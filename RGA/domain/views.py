@@ -5,10 +5,6 @@ from django.http import JsonResponse
 from .models import Game, DomainKnowledge
 from django.contrib.auth.models import User
 import json
-from django.core import serializers
-
-
-# Create your views here.
 
 
 @login_required
@@ -36,19 +32,13 @@ def play_game_view(request, pk):
 def next_(request):
     try:
         domainknowledge = DomainKnowledge.objects.filter(pk=int(request.POST.get("dkid").split('=')[1])).last()
-        print(domainknowledge.content + "-")
     except:
         domainknowledge = DomainKnowledge.objects.filter(pk=int(request.POST.get("dkid"))).last()
-        print(domainknowledge.content + "+")
     parent = domainknowledge.children.all().last()
-    print(parent.pk)
-    print(parent.content)
     children = parent.children.all()
     childrenz = {}
     for child in children:
-        print("pk:" + str(child.pk))
         childrenz[child.pk] = child.content
-        print("content:" + child.content)
 
     data = {"children": childrenz, "Success": True, "parent": parent.content}
     return JsonResponse(data=data, status=200)
@@ -124,3 +114,4 @@ def save(pk):
         childrenz = DomainKnowledge.objects.filter(game=game, gamekey=int(helement['to'])).update(parent=parentz)
 
     return JsonResponse({"success": True}, status=200)
+
