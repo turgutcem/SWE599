@@ -10,20 +10,20 @@
 
 	<h2>Go to <a href="{% url 'domain:play' %}">Play</a> page to simulate a conversational game .</h2>
 	<br>
-	<h2><b>&nbsp &nbsp &nbsp or</b></h2>
+
 	<br>
 	<h2>Go to <a href="{% url 'domain:create' %}">Create</a> page and create your own interview structure.</h2>
 	<br><br>
 
     {% else %}
 	<br><br>
-	<h1><b>Welcome!</b></h1>
+	<h1>Welcome!</h1>
 	<br><br>
 	<h2>Please <a href="{% url 'accounts:login' %}">login</a> or <a href="{% url 'accounts:signup' %}">signup</a> to continue</h2>
     <br><br>
-    <p>This project is made for Boğaziçi University SWE599 course by Turgut Cem Yılmaztürk. The main purpose is to create and simulate a smart interviewer,and score the participants accordingly.
-	  </p>
-	<p>The project repository can be reached from <a target="_blank" rel="noopener noreferrer" href="https://github.com/turgutcem/SWE599">here</a></p>
+    <h2>This project is made for Boğaziçi University SWE599 course by Turgut Cem Yılmaztürk. The main purpose is to create and simulate a smart interviewer,and score the participants accordingly.
+	  </h2>
+	<h2>The project repository can be reached from <a target="_blank" rel="noopener noreferrer" href="https://github.com/turgutcem/SWE599">here</a></h2>
     {% endif %}
 	</div>
 {% endblock %}

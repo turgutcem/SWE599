@@ -10,6 +10,7 @@
 			<li class="list-group-item"><b>Created by: </b>{{ game.created_by }}</li>
 			<br>
 			<a class="btn btn-primary" href="{% url 'domain:play_game' pk=game.pk %}">Play</a>
+			<a class="btn btn-success" href="{% url 'domain:update' pk=game.pk %}">Update</a>
 			<br><br>
 
 		{% endfor %}

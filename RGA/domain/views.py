@@ -2,8 +2,7 @@ from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
 from django.http import JsonResponse
-from .models import Game, DomainKnowledge
-from django.contrib.auth.models import User
+from .models import Game, DomainKnowledge, Results
 import json
 
 
@@ -39,21 +38,41 @@ def next_(request):
     childrenz = {}
     for child in children:
         childrenz[child.pk] = child.content
-
+    results = Results()
+    results.user = request.user
+    results.game = domainknowledge.game
+    results.domainknowledge_pk = domainknowledge.pk
+    results.save()
     data = {"children": childrenz, "Success": True, "parent": parent.content}
     return JsonResponse(data=data, status=200)
 
 
 @login_required
-@require_POST
+def update(request, pk):
+    game = Game.objects.filter(pk=pk).last()
+    context = {'gametree': game.game_tree, "pk_": game.pk}
+    return render(request, "domain/update.html", context=context)
+
+
+@login_required
 def results(request, pk):
-    user = User
     pass
 
 
 @login_required
 def create_view(request):
     return render(request, "domain/create.html")
+
+
+@login_required
+@require_POST
+def update_game(request):
+    try:
+        game = Game.objects.filter(pk=int(request.POST.get("gpk").split('/')[0])).last()
+        save(game.pk)
+        return JsonResponse({"success": True}, status=200)
+    except:
+        return JsonResponse({"success": False}, status=400)
 
 
 @login_required
@@ -114,4 +133,3 @@ def save(pk):
         childrenz = DomainKnowledge.objects.filter(game=game, gamekey=int(helement['to'])).update(parent=parentz)
 
     return JsonResponse({"success": True}, status=200)
-
