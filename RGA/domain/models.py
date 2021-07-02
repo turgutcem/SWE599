@@ -19,6 +19,7 @@ class DomainKnowledge(MPTTModel):
 
 
 class Results(models.Model):
+    playid = models.IntegerField(blank=True, default=-1)
     game = models.ForeignKey(Game, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     domainknowledge_pk = models.IntegerField(default=-1)

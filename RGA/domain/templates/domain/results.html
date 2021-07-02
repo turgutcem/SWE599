@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+	<div class="actionlist">
+	<ul class="list-group">
+	{% for result in results %}
+		<li class="list-group-item"><b>Question</b> : {{ result.parent.content }}</li>
+		<br><br>
+		<li class="list-group-item"><b>Answer</b> : {{ result.content }}</li>
+		<br><br>
+		<li class="list-group-item"><b>Evalutation</b> : {{ result.evaluation }}</li>
+		<br><br>
+	{% endfor %}
+	</ul>
+	</div>
+{% endblock %}

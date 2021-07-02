@@ -1,9 +1,10 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
 from django.http import JsonResponse
 from .models import Game, DomainKnowledge, Results
 import json
+from django.db.models import Max
 
 
 @login_required
@@ -34,15 +35,18 @@ def next_(request):
     except:
         domainknowledge = DomainKnowledge.objects.filter(pk=int(request.POST.get("dkid"))).last()
     parent = domainknowledge.children.all().last()
+
+    result = Results()
+    result.game = domainknowledge.game
+    result.user = request.user
+    result.domainknowledge_pk = domainknowledge.pk
+    result.save()
+
     children = parent.children.all()
     childrenz = {}
     for child in children:
         childrenz[child.pk] = child.content
-    results = Results()
-    results.user = request.user
-    results.game = domainknowledge.game
-    results.domainknowledge_pk = domainknowledge.pk
-    results.save()
+
     data = {"children": childrenz, "Success": True, "parent": parent.content}
     return JsonResponse(data=data, status=200)
 
@@ -56,7 +60,16 @@ def update(request, pk):
 
 @login_required
 def results(request, pk):
-    pass
+    game = Game.objects.filter(pk=pk).last()
+    result = Results.objects.filter(game=game, user=request.user, playid=-1)
+    result_id = Results.objects.all().aggregate(Max('playid'))['playid__max'] + 1
+    pklist = []
+    for re in result:
+        re.playid = result_id
+        re.save()
+        pklist.append(re.domainknowledge_pk)
+    context = {"results": DomainKnowledge.objects.filter(pk__in=pklist)}
+    return render(request, "domain/results.html", context=context)
 
 
 @login_required
@@ -90,6 +103,50 @@ def create_game(request):
         return JsonResponse({"success": True}, status=200)
     except:
         return JsonResponse({"success": False}, status=400)
+
+
+def update_(pk):
+    game = Game.objects.filter(pk=pk).last()
+    game = Game.objects.filter(pk=pk).last()
+    game_tree_json = game.game_tree
+    a = json.loads(game_tree_json)
+    for element in a['nodeDataArray']:
+        if ('category', 'Recycle') in element.items():
+            continue
+        dk = DomainKnowledge()
+        dk.game = game
+        dk.gamekey = element['key']
+
+        if 'BOT_Q' in element['text']:
+
+            dk.content = element['text'].split('BOT_Q')[1]
+            dk.quest_type = 'BOT_Q'
+
+        elif 'INTRO' in element['text']:
+
+            dk.quest_type = 'INTRO'
+            dk.content = element['text'].split('INTRO')[1]
+        elif 'HUM_Q' and 'EVAL' in element['text']:
+
+            dk.quest_type = 'HUM_Q'
+            dk.evaluation = element['text'].split('HUM_Q')[1].split('EVAL')[1]
+            dk.content = element['text'].split('EVAL')[0].split('HUM_Q')[1]
+        elif 'END' in element['text']:
+
+            dk.quest_type = 'END'
+            dk.content = element['text'].split('END')[1]
+
+        else:
+
+            return JsonResponse({"success": False}, status=400)
+
+        dk.save()
+
+    for helement in a['linkDataArray']:
+        parentz = DomainKnowledge.objects.filter(game=game, gamekey=int(helement['from'])).last()
+        childrenz = DomainKnowledge.objects.filter(game=game, gamekey=int(helement['to'])).update(parent=parentz)
+
+    return JsonResponse({"success": True}, status=200)
 
 
 def save(pk):
