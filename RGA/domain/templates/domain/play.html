@@ -11,6 +11,7 @@
 			<br>
 			<a class="btn btn-primary" href="{% url 'domain:play_game' pk=game.pk %}">Play</a>
 			<a class="btn btn-success" href="{% url 'domain:update' pk=game.pk %}">Update</a>
+			<a class="btn btn-danger" href="{% url 'domain:results' pk=game.pk %}">Results</a>
 			<br><br>
 
 		{% endfor %}

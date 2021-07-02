@@ -62,14 +62,24 @@ def update(request, pk):
 def results(request, pk):
     game = Game.objects.filter(pk=pk).last()
     result = Results.objects.filter(game=game, user=request.user, playid=-1)
-    result_id = Results.objects.all().aggregate(Max('playid'))['playid__max'] + 1
-    pklist = []
-    for re in result:
-        re.playid = result_id
-        re.save()
-        pklist.append(re.domainknowledge_pk)
-    context = {"results": DomainKnowledge.objects.filter(pk__in=pklist)}
-    return render(request, "domain/results.html", context=context)
+    if len(result) > 0:
+        pklist = []
+        result_id = Results.objects.all().aggregate(Max('playid'))['playid__max'] + 1
+        for re in result:
+            re.playid = result_id
+            re.save()
+            pklist.append(re.domainknowledge_pk)
+        context = {"results": DomainKnowledge.objects.filter(pk__in=pklist)}
+        return render(request, "domain/results.html", context=context)
+
+    else:
+        pklist = []
+        new = Results.objects.filter(game=game, user=request.user).aggregate(Max('playid'))['playid__max']
+        resultz = Results.objects.filter(playid=new)
+        for re in resultz:
+            pklist.append(re.domainknowledge_pk)
+        context = {"results": DomainKnowledge.objects.filter(pk__in=pklist)}
+        return render(request, "domain/results.html", context=context)
 
 
 @login_required
@@ -96,7 +106,6 @@ def create_game(request):
         game.game_name = request.POST.get("gamename")
         game.game_tree = request.POST.get("gt")
         game.created_by = request.user
-        game.validation = False
 
         game.save()
         save(game.pk)
